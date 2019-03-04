@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <iostream>
-#include <cairo-xcb.h>
+#include <cairo/cairo-xcb.h>
 #include <cstring>
 
 #include <unistd.h> // sleep
@@ -223,6 +223,7 @@ main (int argc, char **argv)
   // get a surface for the window and create a destination for it
   cairo_surface_t *window_surface = cairo_xcb_surface_create(display_info.connection, window,
     display_info.visualtype, width, height);
+
   cairo_surface_t *pointer_surface = cairo_xcb_surface_create(display_info.connection, window,
     display_info.visualtype, width, height);
 
@@ -280,7 +281,7 @@ main (int argc, char **argv)
         is_click_on = false;
         last_coordinates.is_valid = false;
         connected_with_previous = false;
-         cout << "Button " << br->detail << " released at coordinates (" <<br->event_x  << "," << br->event_y << ")d" << endl;
+         cout << "Button " << (int)br->detail << " released at coordinates (" <<br->event_x  << "," << br->event_y << ")d" << endl;
          break;
      }
       case XCB_MOTION_NOTIFY: {
