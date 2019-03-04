@@ -13,7 +13,8 @@
 #include <unistd.h> // sleep
 #include <list>
 
-#include <xcb/xcb_icccm.h>
+#include <thread>
+#include <mutex>
 
 using namespace ::std;
 
@@ -224,6 +225,11 @@ main (int argc, char **argv)
   cairo_surface_t *window_surface = cairo_xcb_surface_create(display_info.connection, window,
     display_info.visualtype, width, height);
 
+  // Layers:
+  // http://zetcode.com/gfx/cairo/ !!!!
+  // https://github.com/dyne/FreeJ/blob/e8e2eb5f3447f569505e9317d119894d112d24c4/src/cairo_layer.cpp
+  // https://cairographics.org/cookbook/animationrotation/
+  // https://cairographics.org/documentation/
   cairo_surface_t *pointer_surface = cairo_xcb_surface_create(display_info.connection, window,
     display_info.visualtype, width, height);
 
@@ -249,6 +255,34 @@ main (int argc, char **argv)
   bool first_coord{true};
   bool connected_with_previous{false};
   bool something_changed{true};
+  mutex mutex_coords;
+  mutex mutex_cursor;
+  coords cursor_position{0,0,false};
+  thread drawing_thread([&]
+  {
+      while(!done)
+      {
+          clear(display_info.connection, cr);
+          cairo_set_source_rgba(cr, 1, 0, 0, 0.5);
+          {
+            lock_guard<mutex> guard(mutex_cursor);
+            cairo_arc(cr, cursor_position.x, cursor_position.y, 15, 0, 6.283185);
+          }
+          cairo_stroke_preserve(cr);
+          cairo_set_source_rgba(cr, 0.3, 0.4, 0.6, 0.5);
+          cairo_fill(cr);
+          xcb_flush(display_info.connection);
+          {
+              lock_guard<mutex> guard(mutex_coords);
+              if(coordinates.size() > 1 /*&& something_changed == true*/)
+              {
+                   draw(display_info.connection, cr, coordinates);
+
+              }
+          }
+          usleep(16* 1000);
+      }
+  });
   while (!done && (event = xcb_wait_for_event (display_info.connection)))
     {
       switch (event->response_type & ~0x80)
@@ -268,10 +302,13 @@ main (int argc, char **argv)
             }
             if(bp->detail == 2)
             {
-                cairo_set_source_surface(cr, window_surface,0, 0);
+                //cairo_set_source_surface(cr, window_surface,0, 0);
                 clear(display_info.connection, cr);
                 something_changed = true;
-                coordinates.clear();
+                {
+                    lock_guard<mutex> guard(mutex_coords);
+                    coordinates.clear();
+                }
                 first_coord = true;
             }
             break;
@@ -287,29 +324,39 @@ main (int argc, char **argv)
       case XCB_MOTION_NOTIFY: {
           xcb_motion_notify_event_t *motion = (xcb_motion_notify_event_t *)event;
          // cairo_set_source_surface(cr, pointer_surface,motion->event_x, motion->event_y);
-          clear(display_info.connection, cr);
+          //clear(display_info.connection, cr);
           cout << "Mouse moved at coordinates (" << motion->event_x << "," <<motion->event_y  << ")" << endl;
-          cairo_set_source_rgba(cr, 1, 0, 0, 0.5);
+          /*cairo_set_source_rgba(cr, 1, 0, 0, 0.5);
           cairo_arc(cr, motion->event_x, motion->event_y, 15, 0, 6.283185);
           cairo_stroke_preserve(cr);
           cairo_set_source_rgba(cr, 0.3, 0.4, 0.6, 0.5);
           cairo_fill(cr);
           xcb_flush(display_info.connection);
+           */
+          {
+              lock_guard<mutex> guard(mutex_cursor);
+              cursor_position.x = motion->event_x;
+              cursor_position.y = motion->event_y;
+          }
+          cairo_surface_create_similar();
 
           if(is_click_on)
           {
               something_changed = true;
-              coordinates.push_back(coords({motion->event_x, motion->event_y, connected_with_previous}));
+              {
+                 lock_guard<mutex> guard(mutex_coords);
+                 coordinates.push_back(coords({motion->event_x, motion->event_y, connected_with_previous}));
+              }
               connected_with_previous = true;
           }
-          if(coordinates.size() > 1 /*&& something_changed == true*/)
+          /*if(coordinates.size() > 1 /*&& something_changed == true)
           {
                something_changed = false;
                //cairo_set_source_surface(cr, window_surface,motion->event_x, motion->event_y);
               // clear(display_info.connection, cr);
                draw(display_info.connection, cr, coordinates);
 
-          }
+          }*/
           break;
         }
         case XCB_KEY_PRESS:
@@ -325,6 +372,8 @@ main (int argc, char **argv)
       }
       free (event);
     }
+
+  drawing_thread.join();
 
   /* close connection to server */
   xcb_disconnect (display_info.connection);
