@@ -10,7 +10,7 @@ class CairoConan(ConanFile):
   author = "Hreniuc Cristian-Alexandru <cristi@hreniuc.pw>"
   license = "GNU LGPL 3"
   settings = "os", "arch", "compiler", "build_type"
-  default_options = "*:shared=False"
+  default_options = "*:shared=False", "cairo:xcb=True"
   generators = "cmake"
   chanel = "stable"
   author = "chreniuc"
