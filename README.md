@@ -3,7 +3,13 @@
 
 ### Basic setup
 
-You will first need the cairo recipe or package with `xcb` enabled:
+Add bincrafters remote to conan:
+
+```sh
+conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
+```
+
+You will first need the cairo recipe or package with `xcb` enable:
 ```sh
 git clone https://github.com/chreniuc/conan-cairo.git
 cd conan-cairo
