@@ -120,13 +120,8 @@ void set_window_properties (xcb_connection_t *connection, xcb_window_t window, c
             XCB_ATOM_STRING, 8, strlen(title), title);
 
 
-    //I3_FLOATING_WINDOW
-    const uint32_t i3_float[] = {1};
-    //xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_list[I3_FLOATING_WINDOW],
-           // XCB_ATOM_CARDINAL, 32, 1, i3_float);
-
     const uint32_t val[] = { 1 };
-    xcb_change_window_attributes(connection, window, XCB_CW_BACK_PIXMAP, val);
+    // xcb_change_window_attributes(connection, window, XCB_CW_BACK_PIXMAP, val);
     // https://xcb.pdx.freedesktop.narkive.com/eaL6ZK80/xcb-cw-override-redirect-strange-behavior
     // https://www.reddit.com/r/unixporn/comments/5tcs3x/oc_i_created_a_application_launcher_in_c_with_xcb/
 }

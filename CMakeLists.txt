@@ -19,9 +19,9 @@ set_target_properties(XCB PROPERTIES INTERFACE_LINK_LIBRARIES
 target_link_libraries(${PROJECT_NAME}
   ${CONAN_TARGETS}
   pthread
-  XCB
-  xcb-shm
-  xcb-render
+  #XCB
+  #xcb-shm
+  #xcb-render
   )
 
 # With xlib
