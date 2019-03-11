@@ -69,7 +69,7 @@ enum {
     NET_WM_STATE,
     NET_WM_STATE_ABOVE,
     NET_WM_DESKTOP,
-    I3_FLOATING_WINDOW
+    NET_WM_STATE_STAYS_ON_TOP
 };
 
 // Set the properties of the window
@@ -82,7 +82,7 @@ void set_window_properties (xcb_connection_t *connection, xcb_window_t window, c
         "_NET_WM_STATE",
         "_NET_WM_STATE_ABOVE",
         "_NET_WM_DESKTOP",
-        "I3_FLOATING_WINDOW"
+        "_NET_WM_STATE_STAYS_ON_TOP"
     };
 
     // get all the atoms
@@ -110,10 +110,12 @@ void set_window_properties (xcb_connection_t *connection, xcb_window_t window, c
    // xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_list[NET_WM_WINDOW_TYPE],
    //         XCB_ATOM_ATOM, 32, 1, &atom_list[NET_WM_WINDOW_TYPE_DOCK]);
     xcb_change_property(connection, XCB_PROP_MODE_APPEND, window, atom_list[NET_WM_STATE],
-            XCB_ATOM_ATOM, 32, 2, &atom_list[NET_WM_STATE_ABOVE]);
+            XCB_ATOM_ATOM, 32, 1, &atom_list[NET_WM_STATE_ABOVE]);
+    xcb_change_property(connection, XCB_PROP_MODE_APPEND, window, atom_list[NET_WM_STATE],
+            XCB_ATOM_ATOM, 32, 1, &atom_list[NET_WM_STATE_STAYS_ON_TOP]);
 
-   // xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_list[NET_WM_DESKTOP],
-    //        XCB_ATOM_CARDINAL, 32, 1, desktops);
+    xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_list[NET_WM_DESKTOP],
+            XCB_ATOM_CARDINAL, 32, 1, desktops);
     xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME,
             XCB_ATOM_STRING, 8, strlen(title), title);
 
@@ -124,7 +126,7 @@ void set_window_properties (xcb_connection_t *connection, xcb_window_t window, c
            // XCB_ATOM_CARDINAL, 32, 1, i3_float);
 
     const uint32_t val[] = { 1 };
-    xcb_change_window_attributes(connection, window, XCB_CW_OVERRIDE_REDIRECT, val);
+    xcb_change_window_attributes(connection, window, XCB_CW_BACK_PIXMAP, val);
     // https://xcb.pdx.freedesktop.narkive.com/eaL6ZK80/xcb-cw-override-redirect-strange-behavior
     // https://www.reddit.com/r/unixporn/comments/5tcs3x/oc_i_created_a_application_launcher_in_c_with_xcb/
 }
@@ -201,6 +203,9 @@ main (int argc, char **argv)
   unsigned char depth{32U};
   unsigned int dock{0U}; // What is this?
   unsigned short class_val{0U}; // What is this ?
+
+
+  width = width;
   xcb_window_t window = xcb_generate_id(display_info.connection);
   const uint32_t vals[] = {0x00000000, 0x00000000, dock, XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_KEY_PRESS | XCB_EVENT_MASK_POINTER_MOTION | XCB_EVENT_MASK_BUTTON_PRESS | XCB_EVENT_MASK_BUTTON_RELEASE, colormap};
   xcb_create_window(display_info.connection, depth, window, display_info.screen->root,
@@ -338,7 +343,7 @@ main (int argc, char **argv)
               cursor_position.x = motion->event_x;
               cursor_position.y = motion->event_y;
           }
-          cairo_surface_create_similar();
+          //cairo_surface_create_similar();
 
           if(is_click_on)
           {
