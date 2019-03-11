@@ -16,6 +16,9 @@ class CairoConan(ConanFile):
   author = "chreniuc"
 
   requires = ('cairo/1.15.14@chreniuc/stable')
+  # We still have two librries linked dynamically
+  # Dependencies of: http://www.linuxfromscratch.org/blfs/view/svn/x/libxcb.html
+  # libXau and libXdmcp : Should I link them statically?
 
   def build(self):
     cmake = CMake(self)
